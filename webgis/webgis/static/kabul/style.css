@@ -1,0 +1,268 @@
+*{
+    margin:0;
+    padding:0;
+    box-sizing: border-box;
+}
+#map{
+    width:100%;
+    height: 100vh;
+}
+
+
+.layer-switcher{
+    position: fixed;
+    top: 30px;
+    right:10px;
+    z-index: 3;
+}
+
+.layer-switcher-container{
+    background-color: #ffffff;
+    padding: 5px;
+    border-radius: 25px;
+}
+
+.layer-switcher__icon{
+    background-image: url(./images/layers.svg);
+    width:35px;
+    height: 35px;
+}
+
+.layer-switcher__content{
+    display: none;
+    background-color: white;
+    margin-top:10px;
+    padding: 10px;
+    width: 200px;
+    border-radius: 5px;
+    border:1px solid rgba(0,60,136,.8);
+    position: absolute;
+    top: 45px;
+    right: 18px;
+}
+
+
+.layer-switcher input{
+    margin:5px;
+}
+
+
+
+.drawing-control{
+    z-index: 3;
+    display: flex;
+    flex-direction: row;
+    flex-flow: row-reverse;
+    gap: 5px;
+}
+
+.drawing-control__icon{
+    width: 35px;
+    height: 35px;
+    background-size: 20px;
+    background-color: #2e6be6;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: none;
+    border-radius: 16.5px;
+
+}
+
+.drawing-control__icon--toggler{
+    display: block;
+    margin-right: 0px;
+    background-image: url(./imgs/pencil-edit-button.svg);
+}
+
+
+.drawing-control__icon--point{
+    background-image: url(./imgs/pin.svg);
+}
+
+
+.drawing-control__icon--line{
+    background-image: url(./imgs/polyline.svg);
+}
+
+
+.drawing-control__icon--polygon{
+    background-image: url(./imgs/polygonal-chart-of-triangles.svg);
+}
+
+
+.drawing-control__icon--finish{
+    background-color:green;
+    background-image: url(./imgs/tick.svg);
+}
+
+
+.drawing-control__icon--clear{
+    background-color:red;
+    background-image: url(./imgs/cross.svg);
+}
+
+.identify__icon{
+    position: relative;
+    float:right;
+    width: 35px;
+    height: 35px;
+    background-image: url(./imgs/information.svg);
+    background-size: 20px;
+    background-color: #2e6be6;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: 4;
+    border-radius: 16.5px;
+
+}
+
+.identify__content{
+    position: relative;
+    background-color: rgba(150, 172, 200, 0.9);
+    padding: 10px 10px 0px 10px;
+    width: 220px;
+    border-radius: 5px;
+    border: 1px solid rgba(0,60,136,.8);
+    opacity: 1;
+    z-index: 3;
+    display: none;
+}
+
+.identify__select{
+    text-align: center;
+}
+
+.identify__select select{
+    width:150px;
+}
+
+.identify__result{
+    padding:5px;
+    overflow-x: auto;
+}
+
+
+
+.measurement-control{
+    z-index: 3;
+    display: flex;
+    flex-direction: row;
+    flex-flow: row-reverse;
+    gap: 5px;
+}
+
+.measurement-control__icon{
+    width: 35px;
+    height: 35px;
+    background-size: 20px;
+    background-color: #2e6be6;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: none;
+    border-radius: 16.5px;
+}
+
+.measurement-control__icon--toggler{
+    margin-right:0px;
+    display: block;
+    background-image: url(./imgs/ruler.svg);
+}
+
+.measurement-control__icon--distance{
+    background-image: url(./imgs/polyline.svg);
+}
+
+.measurement-control__icon--area{
+    background-image: url(./imgs/polygonal-chart-of-triangles.svg);
+}
+
+.tooltip-bottom{
+    position: fixed;
+    background-color: rgb(93 119 152 / 90%);
+    right: 50%;
+    transform: translateX(50%);
+    border-radius: 10px;
+    z-index: 5;
+    bottom: 5px;
+    color: white;
+    min-width: 150px;
+    text-align: center;
+    padding: 10px;
+    display: none;
+}
+
+
+.search-box{
+    position: fixed;
+    top: 30px;
+    right: 100px;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+}
+
+.search-input{
+    height: 35px;
+    width:200px;
+    padding: 5px;
+    text-align: right;
+    direction: rtl;
+}
+
+.search-button{
+    width: 35px;
+    height: 35px;
+    background-image: url(./imgs/search.svg);
+    background-size: 20px;
+    background-color: #2e6be6;
+    background-position: center;
+    background-repeat: no-repeat;
+    margin: -5px;
+    z-index: 3;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+
+.user-button{
+    z-index: 3; 
+    width: 35px;
+    height: 35px;
+    background-image: url(./images/man-user.svg);
+    background-size: 20px;
+    background-color: #2e6be6;
+    background-position: center;
+    background-repeat: no-repeat;  
+    border-radius: 16.5px;
+    position: fixed;
+    top: 195px;
+    right: 15px;
+}
+
+
+.tools{
+    position: fixed;
+    top: 240px; /* adjust as needed */
+    right: 10px;
+    z-index: 10;
+    display: flex;
+    align-items: flex-end;
+    flex-direction: column;
+}
+
+.ol-zoom{
+    background-color: #2e6be6;
+    margin: 150px auto auto 10px;
+}
+
+.ol-zoom:hover{
+    background-color: #2e6be6;
+}
+
+.ol-zoom-in{
+    cursor: pointer;
+}
+
+.ol-zoom-out {
+  cursor: pointer;
+}

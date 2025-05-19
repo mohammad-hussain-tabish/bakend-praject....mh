@@ -1,0 +1,347 @@
+{% load static %}
+<!-- <!DOCTYPE html> -->
+<html lang="fa">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Web GIS - OpenLayers</title>
+
+    <!-- استفاده از CDN برای OpenLayers -->
+    <script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/ol@latest/ol.css"
+    />
+    <link rel="stylesheet" href="{% static 'kabul/style.css' %}" />
+
+    <!-- استایل‌های داخلی -->
+    <style>
+      /* استایل‌های نقشه */
+      #map {
+        width: 100%;
+        height: 599px;
+        margin: 0;
+      }
+
+      /* استایل‌های هدر */
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        text-align: center;
+        position: fixed;
+        width: 100%;
+        z-index: 3;
+        margin: 20px 0;
+        background-color: transparent;
+      }
+
+      .header img {
+        width: 80px;
+        height: auto;
+      }
+
+      /* استایل‌های ابزارها */
+      .layer-switcher,
+      .drawing-control,
+      .identify,
+      .measurement-control,
+      .search-box,
+      .user-button {
+        margin: 5px;
+        padding: 5px;
+      }
+
+      .search-input {
+        padding: 5px;
+        margin: 5px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+
+      .logo{
+        background-color: white;
+        border-radius: 40px;
+      }
+
+      /* استایل‌های پنل یادداشت */
+      .sticky-note {
+        position: absolute;
+        top: 80px;
+        left: 10px;
+        width: 250px;
+        background-color: #fff8dc;
+        border: 1px solid #e6d798;
+        border-radius: 5px;
+        box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+        direction: rtl;
+        font-family: 'Tahoma', sans-serif;
+      }
+
+      .sticky-note-header {
+        background-color: #00ff00;
+        padding: 5px 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-radius: 5px 5px 0 0;
+        cursor: move;
+      }
+
+      .sticky-note-title {
+        font-weight: bold;
+        margin: 0;
+      }
+
+      .sticky-note-controls {
+        display: flex;
+        gap: 5px;
+      }
+
+      .sticky-note-controls button {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+        padding: 0;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 3px;
+      }
+
+      .sticky-note-controls button:hover {
+        background-color: rgba(0, 0, 0, 0.1);
+      }
+
+      .sticky-note-content {
+        padding: 10px;
+      }
+
+      .sticky-note textarea {
+        width: 100%;
+        min-height: 100px;
+        border: 1px solid #00ff00;
+        border-radius: 3px;
+        padding: 5px;
+        resize: vertical;
+        font-family: 'Tahoma', sans-serif;
+        direction: rtl;
+      }
+
+      .sticky-note-footer {
+        padding: 5px 10px;
+        display: flex;
+        justify-content: flex-end;
+        gap: 5px;
+      }
+
+      .sticky-note-footer button {
+        padding: 5px 10px;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+        font-family: 'Tahoma', sans-serif;
+      }
+
+      .save-btn {
+        background-color: #4caf50;
+        color: white;
+      }
+
+      .cancel-btn {
+        background-color: #f44336;
+        color: white;
+      }
+
+      .minimize-btn {
+        background-color: #f5e79e;
+      }
+
+      .sticky-note.minimized .sticky-note-content,
+      .sticky-note.minimized .sticky-note-footer {
+        display: none;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- هدر با لوگوها -->
+    <div class="header">
+      <img class="logo" src="{% static 'kabul/images/WhatsApp_Image_2025-05-15_at_9.52.25_AM-removebg-preview.png' %}" alt="MOHE Logo"/>
+
+      <h1>نقشه گردشگری شهر کابل</h1>
+   <img class="logo" src="{% static 'kabul/images/New_GE_Logo_1-removebg-preview.png' %}" alt="KPU Logo" />
+
+    </div>
+
+    <!-- پنل یادداشت -->
+    <div class="sticky-note" id="stickyNote">
+      <div class="sticky-note-header" id="stickyNoteHeader">
+        <h3 class="sticky-note-title">یادداشت</h3>
+        <div class="sticky-note-controls">
+          <button id="minimizeNote" title="کوچک کردن">_</button>
+          <button id="deleteNote" title="حذف">×</button>
+        </div>
+      </div>
+      <div class="sticky-note-content">
+        <textarea id="noteContent" placeholder="یادداشت خود را اینجا بنویسید..."></textarea>
+      </div>
+      <div class="sticky-note-footer">
+        <button class="save-btn" id="saveNote">ذخیره</button>
+        <button class="cancel-btn" id="cancelEdit">لغو</button>
+      </div>
+    </div>
+
+    <!-- نقشه OpenLayers -->
+    <div id="map">
+    <div class="layer-switcher">
+        <div class="layer-switcher-container">
+          <div class="layer-switcher__icon"></div>
+        </div>
+        <div class="layer-switcher__content"></div>
+    </div>
+    <div class="tooltip-bottom"></div>
+      <div class="search-box">
+        <div class="search-button"></div>
+        <input class="search-input" placeholder="جستجو" type="text" />
+      </div>
+    </div>
+    
+    <div class="tools">
+      <div class="user-button"></div>
+
+      <div class="drawing-control">
+          <div class="drawing-control__icon drawing-control__icon--toggler"></div>
+          <div class="drawing-control__icon drawing-control__icon--point"></div>
+          <div class="drawing-control__icon drawing-control__icon--line"></div>
+          <div class="drawing-control__icon drawing-control__icon--polygon"></div>
+          <div class="drawing-control__icon drawing-control__icon--finish"></div>
+          <div class="drawing-control__icon drawing-control__icon--clear"></div>
+      </div>
+      
+      <div class="measurement-control">
+          <div class="measurement-control__icon measurement-control__icon--toggler"></div>
+          <div class="measurement-control__icon measurement-control__icon--distance"></div>
+          <div class="measurement-control__icon measurement-control__icon--area"></div>
+      </div>
+
+      <div class="identify">
+          <div class="identify__icon"></div>
+          <div class="identify__content">
+              <div class="identify__select">
+              </div>
+              <div class="identify__result"></div>
+          </div>
+      </div>
+      
+    </div>
+
+    
+
+      
+    
+
+    <!-- اسکریپت OpenLayers -->
+    <script>
+      // ساخت نقشه OpenLayers
+      const map = new ol.Map({
+        target: "map",
+        layers: [
+          new ol.layer.Tile({
+            source: new ol.source.OSM(),
+          }),
+        ],
+        view: new ol.View({
+          center: ol.proj.fromLonLat([69.2075, 34.5553]), // مرکز کابل
+          zoom: 12, // سطح بزرگنمایی
+        }),
+      });
+
+        // بررسی نسخه OpenLayers در کنسول
+        console.log('نسخه OpenLayers:', ol.VERSION);
+
+    </script>
+   <script src="{% static 'kabul/app.js' %}"></script>
+
+    <!-- اسکریپت پنل یادداشت -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const stickyNote = document.getElementById('stickyNote');
+        const stickyNoteHeader = document.getElementById('stickyNoteHeader');
+        const noteContent = document.getElementById('noteContent');
+        const saveNoteBtn = document.getElementById('saveNote');
+        const cancelEditBtn = document.getElementById('cancelEdit');
+        const deleteNoteBtn = document.getElementById('deleteNote');
+        const minimizeNoteBtn = document.getElementById('minimizeNote');
+        
+        // بارگذاری یادداشت ذخیره شده
+        if (localStorage.getItem('stickyNoteContent')) {
+          noteContent.value = localStorage.getItem('stickyNoteContent');
+        }
+        
+        // ذخیره یادداشت
+        saveNoteBtn.addEventListener('click', function() {
+          localStorage.setItem('stickyNoteContent', noteContent.value);
+          alert('یادداشت با موفقیت ذخیره شد!');
+        });
+        
+        // لغو تغییرات
+        cancelEditBtn.addEventListener('click', function() {
+          if (localStorage.getItem('stickyNoteContent')) {
+            noteContent.value = localStorage.getItem('stickyNoteContent');
+          } else {
+            noteContent.value = '';
+          }
+        });
+        
+        // حذف یادداشت
+        deleteNoteBtn.addEventListener('click', function() {
+          if (confirm('آیا مطمئن هستید که می‌خواهید یادداشت را حذف کنید؟')) {
+            localStorage.removeItem('stickyNoteContent');
+            noteContent.value = '';
+          }
+        });
+        
+        // کوچک کردن/بزرگ کردن پنل یادداشت
+        minimizeNoteBtn.addEventListener('click', function() {
+          stickyNote.classList.toggle('minimized');
+          if (stickyNote.classList.contains('minimized')) {
+            minimizeNoteBtn.textContent = '□';
+            minimizeNoteBtn.title = 'بزرگ کردن';
+          } else {
+            minimizeNoteBtn.textContent = '_';
+            minimizeNoteBtn.title = 'کوچک کردن';
+          }
+        });
+        
+        // امکان جابجایی پنل یادداشت
+        let isDragging = false;
+        let offsetX, offsetY;
+        
+        stickyNoteHeader.addEventListener('mousedown', function(e) {
+          isDragging = true;
+          offsetX = e.clientX - stickyNote.getBoundingClientRect().left;
+          offsetY = e.clientY - stickyNote.getBoundingClientRect().top;
+        });
+        
+        document.addEventListener('mousemove', function(e) {
+          if (isDragging) {
+            stickyNote.style.left = (e.clientX - offsetX) + 'px';
+            stickyNote.style.top = (e.clientY - offsetY) + 'px';
+          }
+        });
+        
+        document.addEventListener('mouseup', function() {
+          isDragging = false;
+        });
+      });
+    </script>
+     
+</body>
+</html>

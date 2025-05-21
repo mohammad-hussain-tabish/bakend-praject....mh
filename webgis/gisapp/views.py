@@ -35,9 +35,13 @@ def geoserver_proxy(request):
     
     # تعیین آدرس GeoServer بر اساس پارامترهای درخواست
     if service == 'wms':
-        geoserver_url = f"{geoserver_base_url}/cite/wms"
+        if request_type == 'getfeatureinfo':
+            geoserver_url = f"{geoserver_base_url}/wms"  # برای GetFeatureInfo از wms استفاده می‌کنیم
+            logger.debug(f"Using WMS endpoint for GetFeatureInfo: {geoserver_url}")
+        else:
+            geoserver_url = f"{geoserver_base_url}/wms"  # برای سایر درخواست‌های WMS
     else:
-        geoserver_url = f"{geoserver_base_url}/cite/wms"  # پیش‌فرض
+        geoserver_url = f"{geoserver_base_url}/wms"  # پیش‌فرض
     
     # دریافت تمام پارامترهای درخواست
     params = request.GET.dict()
@@ -54,16 +58,36 @@ def geoserver_proxy(request):
     # Ensure we have proper case for layer names
     if 'LAYERS' in params:
         layer_name = params['LAYERS']
+        # برای اطمینان از استفاده از نام‌های صحیح لایه‌ها
         if layer_name.lower() == 'hospital' or layer_name.lower() == 'cite:hospital':
-            params['LAYERS'] = 'cite:hospital'
-        elif layer_name.lower() == '22_district' or layer_name.lower() == 'cite:22_district':
-            params['LAYERS'] = 'cite:22_district'
-        elif layer_name.lower() == 'kabul_area_name' or layer_name.lower() == 'cite:kabul_area_name':
+            params['LAYERS'] = 'cite:Hospital'
+        elif layer_name.lower() in ['22_district', 'cite:22_district', 'district_22', 'cite:district_22', 'kabul_22district', 'cite:kabul_22district']:
+            params['LAYERS'] = 'cite:Kabul_22District'
+        elif layer_name.lower() in ['kabul_area_name', 'cite:kabul_area_name', 'area_name', 'cite:area_name']:
             params['LAYERS'] = 'cite:Kabul_Area_name'
+        elif layer_name.lower() in ['kabul_place_name', 'cite:kabul_place_name', 'place_name', 'cite:place_name']:
+            params['LAYERS'] = 'cite:Kabul_place_name'
     
     # Ensure QUERY_LAYERS matches LAYERS if present
-    if 'LAYERS' in params and 'QUERY_LAYERS' in params:
-        params['QUERY_LAYERS'] = params['LAYERS']
+    if 'LAYERS' in params:
+        if 'QUERY_LAYERS' in params:
+            params['QUERY_LAYERS'] = params['LAYERS']
+        
+        # اگر درخواست GetFeatureInfo است و QUERY_LAYERS تعیین نشده
+        if request_type == 'getfeatureinfo' and 'QUERY_LAYERS' not in params:
+            params['QUERY_LAYERS'] = params['LAYERS']
+    
+    # اطمینان از تنظیم پارامترهای لازم برای GetFeatureInfo
+    if request_type == 'getfeatureinfo':
+        # تنظیم فرمت پاسخ به JSON اگر تعیین نشده باشد
+        if 'INFO_FORMAT' not in params:
+            params['INFO_FORMAT'] = 'application/json'
+        
+        # تنظیم تعداد عوارض برای بازیابی اگر تعیین نشده باشد
+        if 'FEATURE_COUNT' not in params:
+            params['FEATURE_COUNT'] = '10'
+        
+        logger.debug(f"GetFeatureInfo params: {params}")
     
     # لاگ کردن پارامترها برای دیباگ
     logger.debug(f"Proxying request to GeoServer: {geoserver_url}")
@@ -79,7 +103,7 @@ def geoserver_proxy(request):
         start_time = time.time()
         
         # ارسال درخواست به GeoServer
-        response = requests.get(geoserver_url, params=params, timeout=10)
+        response = requests.get(geoserver_url, params=params, timeout=30)  # افزایش مهلت زمانی
         
         # Calculate request time
         request_time = time.time() - start_time
@@ -95,6 +119,17 @@ def geoserver_proxy(request):
             content_type = response.headers.get('Content-Type', 'unknown')
             content_length = len(response.content)
             logger.debug(f"GeoServer response: type={content_type}, size={content_length} bytes")
+            
+            # برای درخواست‌های GetFeatureInfo، محتوای پاسخ را لاگ می‌کنیم
+            if request_type == 'getfeatureinfo' and content_type.startswith('application/json'):
+                try:
+                    json_response = response.json()
+                    features_count = len(json_response.get('features', []))
+                    logger.debug(f"GetFeatureInfo response: {features_count} features found")
+                    if features_count > 0:
+                        logger.debug(f"First feature properties: {json_response['features'][0].get('properties', {})}")
+                except Exception as e:
+                    logger.error(f"Error parsing JSON response: {str(e)}")
             
             # For image responses, log more details
             if content_type.startswith('image/'):

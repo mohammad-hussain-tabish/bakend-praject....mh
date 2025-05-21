@@ -199,6 +199,15 @@
         checkLayerStatus(areaMap, document.getElementById('area-status'), 'Area Name');
         checkLayerStatus(hospitalMap, document.getElementById('hospital-status'), 'Hospital');
         checkLayerStatus(districtMap, document.getElementById('district-status'), '22 District');
+
+        // به جای http://localhost:8080/geoserver/wms آدرس جئوسرور خود را وارد کنید
+        const geoserverUrl = 'http://localhost:8080/geoserver_proxy/citewms';
+
+        // اضافه کردن لایه‌های موجود در جئوسرور
+        addWMSLayer(geoserverUrl, 'cite:Hospital', 'بیمارستان');
+        addWMSLayer(geoserverUrl, 'cite:Kabul_22District', 'منطقه ۲۲ کابل');
+        addWMSLayer(geoserverUrl, 'cite:Kabul_Area_name', 'مناطق کابل');
+        addWMSLayer(geoserverUrl, 'cite:Kabul_place_name', 'مکان‌های کابل');
     </script>
 </body>
 </html> 

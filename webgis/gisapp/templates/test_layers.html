@@ -1,0 +1,204 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GeoServer Layer Test</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@latest/ol.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        .map-container {
+            display: flex;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+        .map {
+            width: 400px;
+            height: 400px;
+            margin: 10px;
+            border: 1px solid #ccc;
+        }
+        .map-title {
+            font-weight: bold;
+            text-align: center;
+            margin: 5px 0;
+        }
+        .status {
+            margin-top: 5px;
+            padding: 5px;
+            text-align: center;
+            font-size: 14px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .loading {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <h1>GeoServer Layer Test</h1>
+    <p>This page tests each layer individually to verify they are working correctly.</p>
+    
+    <div class="map-container">
+        <div>
+            <div class="map-title">Base Map (OpenStreetMap)</div>
+            <div id="base-map" class="map"></div>
+            <div id="base-status" class="status">Loading...</div>
+        </div>
+        
+        <div>
+            <div class="map-title">Area Name Layer</div>
+            <div id="area-map" class="map"></div>
+            <div id="area-status" class="status loading">Loading...</div>
+        </div>
+        
+        <div>
+            <div class="map-title">Hospital Layer</div>
+            <div id="hospital-map" class="map"></div>
+            <div id="hospital-status" class="status loading">Loading...</div>
+        </div>
+        
+        <div>
+            <div class="map-title">22 District Layer</div>
+            <div id="district-map" class="map"></div>
+            <div id="district-status" class="status loading">Loading...</div>
+        </div>
+    </div>
+    
+    <script>
+        // Create base map
+        const baseMap = new ol.Map({
+            target: 'base-map',
+            layers: [
+                new ol.layer.Tile({
+                    source: new ol.source.OSM()
+                })
+            ],
+            view: new ol.View({
+                center: ol.proj.fromLonLat([69.2075, 34.5553]), // Kabul center
+                zoom: 12
+            })
+        });
+        document.getElementById('base-status').className = 'status success';
+        document.getElementById('base-status').textContent = 'Base map loaded successfully';
+        
+        // Create Area Name map
+        const areaMap = new ol.Map({
+            target: 'area-map',
+            layers: [
+                new ol.layer.Tile({
+                    source: new ol.source.OSM()
+                }),
+                new ol.layer.Tile({
+                    source: new ol.source.TileWMS({
+                        url: '/geoserver_proxy/',
+                        params: {
+                            'LAYERS': 'cite:Kabul_Area_name',
+                            'TILED': true,
+                            'FORMAT': 'image/png',
+                            'TRANSPARENT': true,
+                            'VERSION': '1.3.0'
+                        },
+                        serverType: 'geoserver'
+                    })
+                })
+            ],
+            view: new ol.View({
+                center: ol.proj.fromLonLat([69.2075, 34.5553]),
+                zoom: 12
+            })
+        });
+        
+        // Create Hospital map
+        const hospitalMap = new ol.Map({
+            target: 'hospital-map',
+            layers: [
+                new ol.layer.Tile({
+                    source: new ol.source.OSM()
+                }),
+                new ol.layer.Tile({
+                    source: new ol.source.TileWMS({
+                        url: '/geoserver_proxy/',
+                        params: {
+                            'LAYERS': 'cite:hospital',
+                            'TILED': true,
+                            'FORMAT': 'image/png',
+                            'TRANSPARENT': true,
+                            'VERSION': '1.3.0'
+                        },
+                        serverType: 'geoserver'
+                    })
+                })
+            ],
+            view: new ol.View({
+                center: ol.proj.fromLonLat([69.2075, 34.5553]),
+                zoom: 12
+            })
+        });
+        
+        // Create District map
+        const districtMap = new ol.Map({
+            target: 'district-map',
+            layers: [
+                new ol.layer.Tile({
+                    source: new ol.source.OSM()
+                }),
+                new ol.layer.Tile({
+                    source: new ol.source.TileWMS({
+                        url: '/geoserver_proxy/',
+                        params: {
+                            'LAYERS': 'cite:22_district',
+                            'TILED': true,
+                            'FORMAT': 'image/png',
+                            'TRANSPARENT': true,
+                            'VERSION': '1.3.0'
+                        },
+                        serverType: 'geoserver'
+                    })
+                })
+            ],
+            view: new ol.View({
+                center: ol.proj.fromLonLat([69.2075, 34.5553]),
+                zoom: 12
+            })
+        });
+        
+        // Check if layers load successfully
+        function checkLayerStatus(map, statusElement, layerName) {
+            const wmsLayer = map.getLayers().getArray()[1];
+            const source = wmsLayer.getSource();
+            
+            // Listen for tileloadend event
+            source.on('tileloadend', function() {
+                statusElement.className = 'status success';
+                statusElement.textContent = `${layerName} loaded successfully`;
+            });
+            
+            // Listen for tileloaderror event
+            source.on('tileloaderror', function(event) {
+                statusElement.className = 'status error';
+                statusElement.textContent = `Error loading ${layerName}`;
+                console.error(`Error loading ${layerName}:`, event);
+            });
+        }
+        
+        checkLayerStatus(areaMap, document.getElementById('area-status'), 'Area Name');
+        checkLayerStatus(hospitalMap, document.getElementById('hospital-status'), 'Hospital');
+        checkLayerStatus(districtMap, document.getElementById('district-status'), '22 District');
+    </script>
+</body>
+</html> 

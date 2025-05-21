@@ -14,7 +14,10 @@
       href="https://cdn.jsdelivr.net/npm/ol@latest/ol.css"
     />
     <link rel="stylesheet" href="{% static 'kabul/style.css' %}" />
-
+    <div class="search-box">
+      <div class="search-button"></div>
+      <input class="search-input" placeholder="جستجو" type="text">
+    </div>
     <!-- استایل‌های داخلی -->
     <style>
       /* استایل‌های نقشه */
@@ -22,6 +25,7 @@
         width: 100%;
         height: 599px;
         margin: 0;
+        transition: width 0.3s ease, margin-right 0.3s ease;
       }
 
       /* استایل‌های هدر */
@@ -36,6 +40,12 @@
         z-index: 3;
         margin: 20px 0;
         background-color: transparent;
+        transition: width 0.3s ease, margin-right 0.3s ease;
+      }
+      
+      body.body-shifted .header {
+        width: 70%;
+        margin-right: 30%;
       }
 
       .header img {
@@ -52,6 +62,12 @@
       .user-button {
         margin: 5px;
         padding: 5px;
+        transition: right 0.3s ease, margin-right 0.3s ease;
+      }
+      
+      body.body-shifted .layer-switcher,
+      body.body-shifted .user-button {
+        margin-right: 30%;
       }
 
       .search-input {
@@ -69,8 +85,8 @@
       /* استایل‌های پنل یادداشت */
       .sticky-note {
         position: absolute;
-        top: 80px;
-        left: 10px;
+        top: 50px;
+        left: 80px;
         width: 250px;
         background-color: #fff8dc;
         border: 1px solid #e6d798;
@@ -79,6 +95,7 @@
         z-index: 1000;
         direction: rtl;
         font-family: 'Tahoma', sans-serif;
+        display: none;
       }
 
       .sticky-note-header {
@@ -167,6 +184,232 @@
       .sticky-note.minimized .sticky-note-footer {
         display: none;
       }
+      
+      /* دکمه شناور برای باز/بسته کردن پنل یادداشت */
+      .note-toggle-button {
+        position: fixed;
+        top: 50px;
+        left: 20px;
+        width: 50px;
+        height: 50px;
+        background-color: #4caf50;
+        border-radius: 50%;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        z-index: 1001;
+        border: none;
+        font-size: 24px;
+      }
+      
+      .note-toggle-button:hover {
+        background-color: #45a049;
+      }
+      
+      /* استایل‌های identify */
+      .identify {
+        position: relative;
+      }
+      
+      .identify__icon {
+        cursor: pointer;
+      }
+      
+      .identify__content {
+        display: none;
+        position: fixed;
+        left: auto;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: 30%;
+        height: 100%;
+        background-color: white;
+        box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
+        padding: 10px;
+        z-index: 1000;
+        box-sizing: border-box;
+        overflow-y: auto;
+      }
+      
+      .identify.active .identify__content {
+        display: block;
+      }
+      
+      /* استایل‌های مربوط به بخش عکس در پنل identify */
+      .identify__layout {
+        display: flex;
+        height: calc(100% - 40px);
+        flex-direction: column;
+      }
+      
+      .identify__data {
+        flex: 1;
+        padding-right: 10px;
+        overflow-y: auto;
+        margin-bottom: 20px;
+      }
+      
+      .identify__photo-panel {
+        width: 100%;
+        border-top: 1px solid #ccc;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        height: 50%;
+      }
+      
+      .identify__photo-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        overflow-y: auto;
+      }
+      
+      .identify__photo {
+        max-width: 100%;
+        max-height: 300px;
+        margin-bottom: 10px;
+        border: 1px solid #ddd;
+      }
+      
+      .identify__photo-info {
+        width: 100%;
+        padding: 10px;
+        background-color: #f5f5f5;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        margin-top: 10px;
+      }
+      
+      .identify__header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      
+      .identify__title {
+        font-weight: bold;
+        font-size: 18px;
+      }
+      
+      .identify__add-photo {
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 5px 10px;
+        cursor: pointer;
+      }
+      
+      .identify__add-photo:hover {
+        background-color: #45a049;
+      }
+      
+
+      
+      /* استایل‌های مودال آپلود عکس */
+      .photo-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 2000;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      .photo-modal.active {
+        display: flex;
+      }
+      
+      .photo-modal__content {
+        background-color: white;
+        padding: 20px;
+        border-radius: 5px;
+        width: 500px;
+        max-width: 90%;
+      }
+      
+      .photo-modal__header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+      }
+      
+      .photo-modal__title {
+        font-weight: bold;
+        font-size: 18px;
+      }
+      
+      .photo-modal__close {
+        background: none;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+      }
+      
+      .photo-modal__form {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+      
+      .photo-modal__preview {
+        max-width: 100%;
+        max-height: 200px;
+        margin: 10px 0;
+        display: none;
+      }
+      
+      .photo-modal__description {
+        width: 100%;
+        height: 100px;
+        padding: 8px;
+        box-sizing: border-box;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+      
+      .photo-modal__submit {
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 10px;
+        cursor: pointer;
+      }
+      
+      .photo-modal__submit:hover {
+        background-color: #45a049;
+      }
+
+      /* تنظیم موقعیت ابزارها */
+      .tools {
+        transition: right 0.3s ease;
+      }
+      
+      body.body-shifted .tools {
+        right: 30%;
+      }
+
+      body.body-shifted {
+        margin-right: 30%;
+      }
+
+      body.body-shifted #map {
+        width: 100% !important;
+      }
+
     </style>
   </head>
 
@@ -179,6 +422,9 @@
    <img class="logo" src="{% static 'kabul/images/New_GE_Logo_1-removebg-preview.png' %}" alt="KPU Logo" />
 
     </div>
+
+    <!-- دکمه شناور برای باز/بسته کردن پنل یادداشت -->
+    <button class="note-toggle-button" id="noteToggleButton">📝</button>
 
     <!-- پنل یادداشت -->
     <div class="sticky-note" id="stickyNote">
@@ -214,9 +460,9 @@
     </div>
     
     <div class="tools">
-      <div class="user-button"></div>
-
+      
       <div class="drawing-control">
+          <div class="user-button"></div>
           <div class="drawing-control__icon drawing-control__icon--toggler"></div>
           <div class="drawing-control__icon drawing-control__icon--point"></div>
           <div class="drawing-control__icon drawing-control__icon--line"></div>
@@ -234,20 +480,55 @@
       <div class="identify">
           <div class="identify__icon"></div>
           <div class="identify__content">
-              <div class="identify__select">
+              <div class="identify__header">
+                  <div class="identify__title">اطلاعات عارضه</div>
               </div>
-              <div class="identify__result"></div>
+              <div class="identify__layout">
+                  <div class="identify__data">
+              <div class="identify__select">
+                      </div>
+                      <div class="identify__result"></div>
+                  </div>
+                  <div class="identify__photo-panel">
+                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                          <h3>عکس‌ها</h3>
+                          <button class="identify__add-photo" id="addPhotoBtn">افزودن عکس</button>
+                      </div>
+                      <div class="identify__photo-container" id="photoContainer">
+                          <!-- عکس‌ها اینجا نمایش داده می‌شوند -->
+                          <div class="identify__no-photo">هیچ عکسی برای این عارضه وجود ندارد</div>
+                      </div>
+                  </div>
+              </div>
           </div>
       </div>
       
     </div>
 
-    
-
-      
-    
+    <!-- مودال آپلود عکس -->
+    <div class="photo-modal" id="photoModal">
+        <div class="photo-modal__content">
+            <div class="photo-modal__header">
+                <div class="photo-modal__title">افزودن عکس جدید</div>
+                <button class="photo-modal__close" id="closeModalBtn">&times;</button>
+            </div>
+            <form class="photo-modal__form" id="photoUploadForm" enctype="multipart/form-data">
+                <div>
+                    <label for="photoFile">انتخاب عکس:</label>
+                    <input type="file" id="photoFile" name="photo" accept="image/*" required>
+                </div>
+                <img class="photo-modal__preview" id="photoPreview">
+                <div>
+                    <label for="photoDescription">توضیحات عکس:</label>
+                    <textarea class="photo-modal__description" id="photoDescription" name="description" placeholder="توضیحات عکس را وارد کنید..."></textarea>
+                </div>
+                <button type="submit" class="photo-modal__submit">آپلود عکس</button>
+            </form>
+        </div>
+    </div>
 
     <!-- اسکریپت OpenLayers -->
+    <script src="{% static 'kabul/proxy.js' %}"></script>
     <script>
       // ساخت نقشه OpenLayers
       const map = new ol.Map({
@@ -263,85 +544,409 @@
         }),
       });
 
-        // بررسی نسخه OpenLayers در کنسول
-        console.log('نسخه OpenLayers:', ol.VERSION);
-
-    </script>
-   <script src="{% static 'kabul/app.js' %}"></script>
-
-    <!-- اسکریپت پنل یادداشت -->
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        const stickyNote = document.getElementById('stickyNote');
-        const stickyNoteHeader = document.getElementById('stickyNoteHeader');
-        const noteContent = document.getElementById('noteContent');
-        const saveNoteBtn = document.getElementById('saveNote');
-        const cancelEditBtn = document.getElementById('cancelEdit');
-        const deleteNoteBtn = document.getElementById('deleteNote');
-        const minimizeNoteBtn = document.getElementById('minimizeNote');
+      // بررسی نسخه OpenLayers در کنسول
+      console.log('نسخه OpenLayers:', ol.VERSION);
+      
+      // Create a vector source for the markers
+      const markerSource = new ol.source.Vector();
+      
+      // Create a vector layer for the markers
+      const markerLayer = new ol.layer.Vector({
+        source: markerSource,
+        style: new ol.style.Style({
+          image: new ol.style.Icon({
+            anchor: [0.5, 1],
+            anchorXUnits: 'fraction',
+            anchorYUnits: 'fraction',
+            src: '{% static "kabul/images/marker-pin.svg" %}',
+            scale: 1
+          })
+        })
+      });
+      
+      // Add the marker layer to the map
+      map.addLayer(markerLayer);
+      
+      // Create overlay for popup
+      const popupContainer = document.createElement('div');
+      popupContainer.className = 'ol-popup';
+      popupContainer.style.position = 'absolute';
+      popupContainer.style.backgroundColor = 'white';
+      popupContainer.style.boxShadow = '0 1px 4px rgba(0,0,0,0.2)';
+      popupContainer.style.padding = '15px';
+      popupContainer.style.borderRadius = '10px';
+      popupContainer.style.border = '1px solid #cccccc';
+      popupContainer.style.bottom = '12px';
+      popupContainer.style.left = '-50px';
+      popupContainer.style.minWidth = '150px';
+      popupContainer.style.zIndex = '1000';
+      
+      const popupCloser = document.createElement('a');
+      popupCloser.href = '#';
+      popupCloser.style.position = 'absolute';
+      popupCloser.style.top = '2px';
+      popupCloser.style.right = '8px';
+      popupCloser.style.color = '#999';
+      popupCloser.style.textDecoration = 'none';
+      popupCloser.innerHTML = '✖';
+      popupContainer.appendChild(popupCloser);
+      
+      const popupContent = document.createElement('div');
+      popupContent.style.direction = 'rtl';
+      popupContainer.appendChild(popupContent);
+      
+      document.body.appendChild(popupContainer);
+      
+      const popup = new ol.Overlay({
+        element: popupContainer,
+        autoPan: true,
+        autoPanAnimation: {
+          duration: 250
+        }
+      });
+      
+      map.addOverlay(popup);
+      
+      // Close popup when closer is clicked
+      popupCloser.onclick = function() {
+        popup.setPosition(undefined);
+        popupCloser.blur();
+        return false;
+      };
+      
+      // Add marker at the specified coordinates and optionally show popup
+      function addMarkerAtCoordinates(coordinates, showPopup = false) {
+        // Clear previous markers
+        markerSource.clear();
         
-        // بارگذاری یادداشت ذخیره شده
-        if (localStorage.getItem('stickyNoteContent')) {
-          noteContent.value = localStorage.getItem('stickyNoteContent');
+        // Create a marker feature at the location
+        const marker = new ol.Feature({
+          geometry: new ol.geom.Point(coordinates)
+        });
+        
+        // Add the marker to the source
+        markerSource.addFeature(marker);
+        
+        if (showPopup) {
+          // Get the coordinates in longitude/latitude
+          const lonLat = ol.proj.transform(coordinates, 'EPSG:3857', 'EPSG:4326');
+          
+          // Show popup with coordinates
+          popupContent.innerHTML = `
+            <h4>موقعیت انتخاب شده</h4>
+            <p>طول جغرافیایی: ${lonLat[0].toFixed(6)}</p>
+            <p>عرض جغرافیایی: ${lonLat[1].toFixed(6)}</p>
+          `;
+          
+          popup.setPosition(coordinates);
+        } else {
+          // Hide popup if showPopup is false
+          popup.setPosition(undefined);
+        }
+      }
+      
+      // Handle single click events (only add marker)
+      map.on('click', function(event) {
+        addMarkerAtCoordinates(event.coordinate, false);
+      });
+      
+      // Handle double click events (show marker and popup)
+      map.on('dblclick', function(event) {
+        addMarkerAtCoordinates(event.coordinate, true);
+        
+        // Prevent the single click event from firing
+        event.stopPropagation();
+      });
+      
+      // Implement search functionality
+      document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.querySelector('.search-input');
+        const searchButton = document.querySelector('.search-button');
+        
+        // Function to perform the search
+        function performSearch() {
+          const searchText = searchInput.value.trim();
+          if (!searchText) return;
+          
+          // Show loading state
+          searchButton.classList.add('loading');
+          
+          // Make a request to Nominatim API
+          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchText)}`)
+            .then(response => response.json())
+            .then(data => {
+              // Remove loading state
+              searchButton.classList.remove('loading');
+              
+              if (data && data.length > 0) {
+                // Get the first result
+                const result = data[0];
+                const lon = parseFloat(result.lon);
+                const lat = parseFloat(result.lat);
+                
+                // Transform to map projection
+                const coordinates = ol.proj.transform([lon, lat], 'EPSG:4326', 'EPSG:3857');
+                
+                // Pan to the location
+                map.getView().animate({
+                  center: coordinates,
+                  zoom: 15,
+                  duration: 1000
+                });
+                
+                // Add a marker at the found location
+                addMarkerAtCoordinates(coordinates, true);
+              } else {
+                // No results found
+                alert('محل مورد نظر پیدا نشد');
+              }
+            })
+            .catch(error => {
+              // Remove loading state
+              searchButton.classList.remove('loading');
+              console.error('Error during search:', error);
+              alert('خطا در جستجو');
+            });
         }
         
-        // ذخیره یادداشت
-        saveNoteBtn.addEventListener('click', function() {
-          localStorage.setItem('stickyNoteContent', noteContent.value);
-          alert('یادداشت با موفقیت ذخیره شد!');
-        });
+        // Add event listener to search button
+        searchButton.addEventListener('click', performSearch);
         
-        // لغو تغییرات
-        cancelEditBtn.addEventListener('click', function() {
-          if (localStorage.getItem('stickyNoteContent')) {
-            noteContent.value = localStorage.getItem('stickyNoteContent');
-          } else {
-            noteContent.value = '';
+        // Add event listener for Enter key in search input
+        searchInput.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter') {
+            performSearch();
           }
-        });
-        
-        // حذف یادداشت
-        deleteNoteBtn.addEventListener('click', function() {
-          if (confirm('آیا مطمئن هستید که می‌خواهید یادداشت را حذف کنید؟')) {
-            localStorage.removeItem('stickyNoteContent');
-            noteContent.value = '';
-          }
-        });
-        
-        // کوچک کردن/بزرگ کردن پنل یادداشت
-        minimizeNoteBtn.addEventListener('click', function() {
-          stickyNote.classList.toggle('minimized');
-          if (stickyNote.classList.contains('minimized')) {
-            minimizeNoteBtn.textContent = '□';
-            minimizeNoteBtn.title = 'بزرگ کردن';
-          } else {
-            minimizeNoteBtn.textContent = '_';
-            minimizeNoteBtn.title = 'کوچک کردن';
-          }
-        });
-        
-        // امکان جابجایی پنل یادداشت
-        let isDragging = false;
-        let offsetX, offsetY;
-        
-        stickyNoteHeader.addEventListener('mousedown', function(e) {
-          isDragging = true;
-          offsetX = e.clientX - stickyNote.getBoundingClientRect().left;
-          offsetY = e.clientY - stickyNote.getBoundingClientRect().top;
-        });
-        
-        document.addEventListener('mousemove', function(e) {
-          if (isDragging) {
-            stickyNote.style.left = (e.clientX - offsetX) + 'px';
-            stickyNote.style.top = (e.clientY - offsetY) + 'px';
-          }
-        });
-        
-        document.addEventListener('mouseup', function() {
-          isDragging = false;
         });
       });
+      
+      // Add CSS styles for search button loading state
+      const searchStyles = document.createElement('style');
+      searchStyles.textContent = `
+        .search-button {
+          cursor: pointer;
+          background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23666"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 0 0 1.48-5.34c-.47-2.78-2.79-5-5.59-5.34a6.505 6.505 0 0 0-7.27 7.27c.34 2.8 2.56 5.12 5.34 5.59a6.5 6.5 0 0 0 5.34-1.48l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>');
+          background-repeat: no-repeat;
+          background-position: center;
+          background-size: 20px;
+          width: 30px;
+          height: 30px;
+          display: inline-block;
+          vertical-align: middle;
+        }
+        
+        .search-button.loading {
+          background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23666"><path d="M12 4V2A10 10 0 0 0 2 12h2a8 8 0 0 1 8-8z"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite"/></path></svg>');
+        }
+        
+        .search-input {
+          border: 1px solid #ccc;
+          padding: 8px;
+          border-radius: 4px;
+          margin-right: 5px;
+          width: 180px;
+        }
+      `;
+      document.head.appendChild(searchStyles);
     </script>
-     
+    <script src="{% static 'kabul/app.js' %}"></script>
+   
+   <!-- اسکریپت پنل یادداشت -->
+   <script>
+     document.addEventListener('DOMContentLoaded', function() {
+       const stickyNote = document.getElementById('stickyNote');
+       const stickyNoteHeader = document.getElementById('stickyNoteHeader');
+       const noteContent = document.getElementById('noteContent');
+       const saveNoteBtn = document.getElementById('saveNote');
+       const cancelEditBtn = document.getElementById('cancelEdit');
+       const deleteNoteBtn = document.getElementById('deleteNote');
+       const minimizeNoteBtn = document.getElementById('minimizeNote');
+       const noteToggleButton = document.getElementById('noteToggleButton');
+       
+       // بارگذاری یادداشت ذخیره شده
+       if (localStorage.getItem('stickyNoteContent')) {
+         noteContent.value = localStorage.getItem('stickyNoteContent');
+       }
+       
+       // باز/بسته کردن پنل یادداشت با دکمه شناور
+       noteToggleButton.addEventListener('click', function() {
+         if (stickyNote.style.display === 'none' || stickyNote.style.display === '') {
+           stickyNote.style.display = 'block';
+         } else {
+           stickyNote.style.display = 'none';
+         }
+       });
+       
+       // ذخیره یادداشت
+       saveNoteBtn.addEventListener('click', function() {
+         localStorage.setItem('stickyNoteContent', noteContent.value);
+         alert('یادداشت با موفقیت ذخیره شد!');
+       });
+       
+       // لغو تغییرات
+       cancelEditBtn.addEventListener('click', function() {
+         if (localStorage.getItem('stickyNoteContent')) {
+           noteContent.value = localStorage.getItem('stickyNoteContent');
+         } else {
+           noteContent.value = '';
+         }
+       });
+       
+       // حذف یادداشت
+       deleteNoteBtn.addEventListener('click', function() {
+         if (confirm('آیا مطمئن هستید که می‌خواهید یادداشت را حذف کنید؟')) {
+           localStorage.removeItem('stickyNoteContent');
+           noteContent.value = '';
+         }
+       });
+       
+       // کوچک کردن/بزرگ کردن پنل یادداشت
+       minimizeNoteBtn.addEventListener('click', function() {
+         stickyNote.classList.toggle('minimized');
+         if (stickyNote.classList.contains('minimized')) {
+           minimizeNoteBtn.textContent = '□';
+           minimizeNoteBtn.title = 'بزرگ کردن';
+         } else {
+           minimizeNoteBtn.textContent = '_';
+           minimizeNoteBtn.title = 'کوچک کردن';
+         }
+       });
+       
+       // امکان جابجایی پنل یادداشت
+       let isDragging = false;
+       let offsetX, offsetY;
+       
+       stickyNoteHeader.addEventListener('mousedown', function(e) {
+         isDragging = true;
+         offsetX = e.clientX - stickyNote.getBoundingClientRect().left;
+         offsetY = e.clientY - stickyNote.getBoundingClientRect().top;
+       });
+       
+       document.addEventListener('mousemove', function(e) {
+         if (isDragging) {
+           stickyNote.style.left = (e.clientX - offsetX) + 'px';
+           stickyNote.style.top = (e.clientY - offsetY) + 'px';
+         }
+       });
+       
+       document.addEventListener('mouseup', function() {
+         isDragging = false;
+       });
+       
+       // تنظیم عملکرد دکمه identify
+       const identifyElement = document.querySelector('.identify');
+       const identifyIcon = document.querySelector('.identify__icon');
+       const mapElement = document.getElementById('map');
+       const toolsElement = document.querySelector('.tools');
+       const bodyElement = document.body;
+       const headerElement = document.querySelector('.header');
+       
+       // تابع برای باز کردن پنل
+       function openIdentifyPanel() {
+         identifyElement.classList.add('active');
+         bodyElement.classList.add('body-shifted');
+       }
+       
+       // تابع برای بستن پنل
+       function closeIdentifyPanel() {
+         identifyElement.classList.remove('active');
+         bodyElement.classList.remove('body-shifted');
+       }
+       
+       // باز و بسته کردن پنل با کلیک روی آیکون
+       identifyIcon.addEventListener('click', function() {
+         if (identifyElement.classList.contains('active')) {
+           closeIdentifyPanel();
+         } else {
+           openIdentifyPanel();
+         }
+       });
+       
+       // مدیریت مودال آپلود عکس
+       const photoModal = document.getElementById('photoModal');
+       const addPhotoBtn = document.getElementById('addPhotoBtn');
+       const closeModalBtn = document.getElementById('closeModalBtn');
+       const photoUploadForm = document.getElementById('photoUploadForm');
+       const photoFile = document.getElementById('photoFile');
+       const photoPreview = document.getElementById('photoPreview');
+       const photoContainer = document.getElementById('photoContainer');
+       
+       // نمایش مودال با کلیک روی دکمه افزودن عکس
+       addPhotoBtn.addEventListener('click', function() {
+         photoModal.classList.add('active');
+       });
+       
+       // بستن مودال
+       closeModalBtn.addEventListener('click', function() {
+         photoModal.classList.remove('active');
+       });
+       
+       // بستن مودال با کلیک بیرون از آن
+       photoModal.addEventListener('click', function(e) {
+         if (e.target === photoModal) {
+           photoModal.classList.remove('active');
+         }
+       });
+       
+       // نمایش پیش‌نمایش عکس انتخاب شده
+       photoFile.addEventListener('change', function() {
+         if (this.files && this.files[0]) {
+           const reader = new FileReader();
+           
+           reader.onload = function(e) {
+             photoPreview.src = e.target.result;
+             photoPreview.style.display = 'block';
+           };
+           
+           reader.readAsDataURL(this.files[0]);
+         }
+       });
+       
+       // ارسال فرم آپلود عکس
+       photoUploadForm.addEventListener('submit', function(e) {
+         e.preventDefault();
+         
+         // در اینجا می‌توان از AJAX برای ارسال عکس به سرور استفاده کرد
+         // اما برای نمونه، ما فقط عکس را در صفحه نمایش می‌دهیم
+         
+         if (photoFile.files && photoFile.files[0]) {
+           const reader = new FileReader();
+           const description = document.getElementById('photoDescription').value;
+           
+           reader.onload = function(e) {
+             // حذف پیام "هیچ عکسی وجود ندارد" اگر وجود داشته باشد
+             const noPhotoMsg = photoContainer.querySelector('.identify__no-photo');
+             if (noPhotoMsg) {
+               noPhotoMsg.remove();
+             }
+             
+             // ایجاد عناصر برای نمایش عکس و اطلاعات آن
+             const photoWrapper = document.createElement('div');
+             photoWrapper.style.marginBottom = '20px';
+             
+             const img = document.createElement('img');
+             img.src = e.target.result;
+             img.className = 'identify__photo';
+             
+             const info = document.createElement('div');
+             info.className = 'identify__photo-info';
+             info.textContent = description || 'بدون توضیحات';
+             
+             // افزودن به صفحه
+             photoWrapper.appendChild(img);
+             photoWrapper.appendChild(info);
+             photoContainer.appendChild(photoWrapper);
+             
+             // بستن مودال و پاک کردن فرم
+             photoModal.classList.remove('active');
+             photoUploadForm.reset();
+             photoPreview.style.display = 'none';
+           };
+           
+           reader.readAsDataURL(photoFile.files[0]);
+         }
+       });
+     });
+   </script>
 </body>
 </html>
